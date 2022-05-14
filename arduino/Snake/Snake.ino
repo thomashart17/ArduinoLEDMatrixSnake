@@ -190,6 +190,9 @@ void updateDisplay() {
   }
 }
 
+/**
+ * Draws the current board on the LED Matrix
+ */
 void drawDisplay() {
   if (playing) {
     if (show_food) {
@@ -209,6 +212,9 @@ void drawDisplay() {
   }
 }
 
+/*
+ * Moves the snake one space forward
+ */
 void moveSnake() {
   SnakeSegment *temp = tail;
   tail = tail->previous;
@@ -261,6 +267,9 @@ void moveSnake() {
   }
 }
 
+/*
+ * Setup for the game.
+ */
 void setup() {
   Serial.begin(9600);
   randomSeed(analogRead(0));
@@ -280,6 +289,9 @@ void setup() {
   drawDisplay();
 }
 
+/*
+ * Main loop for the game.
+ */
 void loop() {
   if (playing) {
     moveSnake();
@@ -293,6 +305,9 @@ void loop() {
   }
 }
 
+/*
+ * Handles serial input to move the snake.
+ */
 void serialEvent() {
   int original = dir;
   while (Serial.available() && dir == original) {

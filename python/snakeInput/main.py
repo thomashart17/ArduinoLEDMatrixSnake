@@ -2,22 +2,26 @@ import pynput
 import serial
 
 
+# Class to handle keyboard input and send it to the Arduino
 class SerialInput:
     PORT = "COM5"
 
+    # Constructor
     def __init__(self):
         self.serial_port = serial.Serial(self.PORT, 9600)
         self.listener = pynput.keyboard.Listener(on_press=self.on_press)
 
+    # Starts the keyboard listener
     def start(self):
         self.listener.start()
         self.listener.join()
 
+    # Stops the keyboard listener
     def stop(self):
         self.listener.stop()
 
+    # Handles keyboard press
     def on_press(self, key):
-        print(key)
         if key == pynput.keyboard.Key.esc:
             self.stop()
         elif key == pynput.keyboard.Key.enter:
