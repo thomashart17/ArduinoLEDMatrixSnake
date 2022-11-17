@@ -4,6 +4,16 @@
 //
 
 /**
+ * Directions the snake can move.
+ */
+enum Direction {
+  UP = 1,
+  LEFT = 2,
+  DOWN = 3,
+  RIGHT = 4
+};
+
+/**
  * Represents one segment of the snake used for the game.
  */
 struct SnakeSegment {
@@ -84,30 +94,28 @@ bool playing = 0;
 bool food_status = 0;
 bool show_food = 1;
 
-int dir = 4;
+int dir = RIGHT;
 int score = 0;
-int food_x = NULL;
-int food_y = NULL;
+int food_x;
+int food_y;
 
 /**
  * Resets board to initial state to allow the game to be played multiple times.
  */
 void resetBoard() {
-  SnakeSegment *current = head;
-  while (current != NULL) {
-    SnakeSegment *temp = current;
-    current = current->next;
+  while (head) {
+    SnakeSegment *temp = head;
+    head = head->next;
     free(temp);
   }
-  head = NULL;
   tail = NULL;
-  dir = 4;
+  dir = RIGHT;
   head = malloc(sizeof(SnakeSegment));
   head->next = NULL;
   head->previous = NULL;
   head->x = 2;
   head->y = 2;
-  head->dir = 4;
+  head->dir = RIGHT;
   tail = head;
   addSegment();
   addFood();
@@ -125,19 +133,19 @@ void addSegment() {
   tail->previous = temp;
   temp->next = tail;
   switch (temp->dir) {
-    case 1:
+    case UP:
       tail->x = temp->x;
       tail->y = temp->y + 1;
       break;
-    case 2:
+    case LEFT:
       tail->x = temp->x + 1;
       tail->y = temp->y;
       break;
-    case 3:
+    case DOWN:
       tail->x = temp->x;
       tail->y = temp->y - 1;
       break;
-    case 4:
+    case RIGHT:
       tail->x = temp->x - 1;
       tail->y = temp->y;
       break;
@@ -160,30 +168,28 @@ void addFood() {
  * Updates the board to show the current output
  */
 void updateDisplay() {
-  for (int i = 0; i < 8; i++) {
-    for (int j = 0; j < 8; j++) {
+  for (int i = 0; i < 8; ++i) {
+    for (int j = 0; j < 8; ++j) {
       board[i][j] = 0;
     }
   }
   if (playing) {
     SnakeSegment *current = head;
-    while (current != NULL) {
+    while (current) {
       board[current->y][current->x] = 1;
       current = current->next;
     }
-    if (!food_status) {
-      addFood();
-    }
+    if (!food_status) addFood();
   } else {
     int ones = score%10;
-    int tens = score/10%10;
-    for (int i = 0; i < 5; i++) {
-      for (int j = 0; j < 3; j++) {
+    int tens = score/10;
+    for (int i = 0; i < 5; ++i) {
+      for (int j = 0; j < 3; ++j) {
         board[i + 1][j] = digits[tens][i][j];
       }
     }
-    for (int i = 0; i < 5; i++) {
-      for (int j = 0; j < 3; j++) {
+    for (int i = 0; i < 5; ++i) {
+      for (int j = 0; j < 3; ++j) {
         board[i + 1][j + 4] = digits[ones][i][j];
       }
     }
@@ -194,19 +200,11 @@ void updateDisplay() {
  * Draws the current board on the LED Matrix
  */
 void drawDisplay() {
-  if (playing) {
-    if (show_food) {
-      board[food_y][food_x] = 1;
-    } else {
-      board[food_y][food_x] = 0;
-    }
-  }
-  for (int i = 0; i < 8; i++) {
-    for (int j = 0; j < 8; j++) digitalWrite(cols[j], HIGH);
+  if (playing) board[food_y][food_x] = show_food ? 1 : 0;
+  for (int i = 0; i < 8; ++i) {
+    for (int j = 0; j < 8; ++j) digitalWrite(cols[j], HIGH);
     digitalWrite(rows[i], HIGH);
-    for (int j = 0; j < 8; j++) {
-      digitalWrite(cols[j], board[i][j] ? LOW: HIGH);
-    }
+    for (int j = 0; j < 8; ++j) digitalWrite(cols[j], board[i][j] ? LOW: HIGH);
     delay(1);
     digitalWrite(rows[i], LOW);    
   }
@@ -219,35 +217,28 @@ void moveSnake() {
   SnakeSegment *temp = tail;
   tail = tail->previous;
   tail->next = NULL;
-  free(temp);
-  temp = malloc(sizeof(SnakeSegment));
   switch (dir) {
-    case 1:
+    case UP:
       temp->x = head->x;
       temp->y = head->y - 1;
       break;
-    case 2:
+    case LEFT:
       temp->x = head->x - 1;
       temp->y = head->y;
       break;
-    case 3:
+    case DOWN:
       temp->x = head->x;
       temp->y = head->y + 1;
       break;
-    case 4:
+    case RIGHT:
       temp->x = head->x + 1;
       temp->y = head->y;
       break;
   }
-  if (temp->x > 7) {
-    temp->x = 0;
-  } else if (temp->x < 0) {
-    temp->x = 7;
-  } else if (temp->y > 7) {
-    temp->y = 0;
-  } else if (temp->y < 0) {
-    temp->y = 7;
-  }
+  if (temp->x > 7) temp->x = 0;
+  else if (temp->x < 0) temp->x = 7;
+  else if (temp->y > 7) temp->y = 0;
+  else if (temp->y < 0) temp->y = 7;
   temp->next = head;
   temp->previous = NULL;
   temp->dir = dir;
@@ -255,7 +246,7 @@ void moveSnake() {
   head = temp;
   if ((head->x == food_x) && (head->y == food_y)) {
     addSegment();
-    score++;
+    ++score;
     if (score == 62) {
       playing = 0;
       resetBoard();
@@ -273,9 +264,7 @@ void moveSnake() {
 void setup() {
   Serial.begin(9600);
   randomSeed(analogRead(0));
-  for (int i = 2; i < 18; i++) {
-    pinMode(i, OUTPUT);
-  }
+  for (int i = 2; i < 18; ++i) pinMode(i, OUTPUT);
   head = malloc(sizeof(SnakeSegment));
   head->next = NULL;
   head->previous = NULL;
@@ -293,14 +282,10 @@ void setup() {
  * Main loop for the game.
  */
 void loop() {
-  if (playing) {
-    moveSnake();
-  }
+  if (playing) moveSnake();
   updateDisplay();
-  for (int i = 0; i < 36; i++) {
-    if (i%12 == 0) {
-      show_food = !show_food;
-    }
+  for (int i = 0; i < 36; ++i) {
+    if (i%12 == 0) show_food = !show_food;
     drawDisplay();
   }
 }
@@ -319,16 +304,16 @@ void serialEvent() {
         score = 0;
         break;
       case '1':
-        if (dir != 3) dir = 1;
+        if (dir != DOWN) dir = UP;
         break;
       case '2':
-        if (dir != 4) dir = 2;
+        if (dir != RIGHT) dir = LEFT;
         break;
       case '3':
-        if (dir != 1) dir = 3;
+        if (dir != UP) dir = DOWN;
         break;
       case '4':
-        if (dir != 2) dir = 4;
+        if (dir != LEFT) dir = RIGHT;
         break;
       default:
         break;
